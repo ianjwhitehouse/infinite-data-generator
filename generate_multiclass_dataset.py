@@ -38,7 +38,8 @@ for i, img in enumerate(background_imgs):
         if cls_instances < 1:
             bbs.append(np.zeros((480, 640)))
         else:
-            bbs.append(np.any(np.array(cls_bbs), axis=0))
+            bbs.append(np.any(np.array(cls_bbs), axis=0)[:, :, 0])
+            print(np.any(np.array(cls_bbs), axis=0).shape)
         
     img.save("output/%d_x.png" % i)
     np.save("output/%d_y.npy" % i, np.stack(bbs, axis=-1))

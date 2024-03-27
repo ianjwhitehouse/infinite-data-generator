@@ -1,2 +1,3 @@
 prompt,min_appear,max_appear,aspect_ratio_min,aspect_ratio_max,width_min,height_min,width_max,height_max,
-"a massive fire filling the entire frame with bright red flames and thick black smoke, hyperrealistic, top down", 1,2,0.5,2,,,,
+"a solitary black and white striped zebra grazing, hyperrealistic, safari, showing only the animal's entire body, animal fills entire frame",0,2,,,300,200,400,300,
+"a solitary grey elephant, hyperrealistic, safari, showing only the animal's entire body, animal fills entire frame",0,1,,,500,400,600,450,
