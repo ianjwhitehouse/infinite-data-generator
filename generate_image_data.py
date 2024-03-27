@@ -1,26 +1,31 @@
 # Imports
-from diffusers import StableDiffusionPipeline, StableDiffusionInpaintPipeline
+from diffusers import AutoPipelineForText2Image, AutoPipelineForInpainting
 import numpy as np
 from PIL import Image
 
 
 # Load diffusion models
-background_model = StableDiffusionPipeline.from_pretrained(
-	"stabilityai/stable-diffusion-2",
+background_model = AutoPipelineForText2Image.from_pretrained(
+	"stabilityai/sdxl-turbo",
 ).to("cuda")
 
 # inpainting_model = StableDiffusionInpaintPipeline.from_pretrained(
 #     "stabilityai/stable-diffusion-2-inpainting"
 # ).to("cuda")
-inpainting_model = StableDiffusionInpaintPipeline(
-    **background_model.components
-).to("cuda")
+inpainting_model = AutoPipelineForInpainting.from_pipe(background_model).to("cuda")
 
-default_negative_prompt = None # "low quality, poor quality, anime, cartoon, ugly, deformed, disfigured, poor details, blurry"
+default_negative_prompt = "cartoon drawing, dark"
 
 # Generate background img or img(s)
 def gen_background_img(prompt, negative_prompt=default_negative_prompt, num_imgs_per_prompt=8, width=640, height=480):
-    return background_model(prompt, negative_prompt=negative_prompt, num_images_per_prompt=num_imgs_per_prompt, width=width, height=height, guidance_scale=10).images
+    return background_model(
+        prompt=prompt,
+        negative_prompt=negative_prompt,
+        num_images_per_prompt=num_imgs_per_prompt,
+        width=width,
+        height=height,
+        # num_inference_steps=1
+    ).images
 
 # Generate bounding boxes (aspect_ratio is in width/height)
 def gen_bounding_box_img(
@@ -57,4 +62,13 @@ def gen_bounding_box_img(
 def inpaint_class_into_images(image, bounding_box_information, class_prompt, negative_prompt=default_negative_prompt, width=640, height=480):
     bounding_box = gen_bounding_box_img(**bounding_box_information)
     print(class_prompt)
-    return inpainting_model(prompt=class_prompt, negative_prompt=negative_prompt, image=image, mask_image=bounding_box, width=width, height=height, guidance_scale=16, strength=0.7).images, bounding_box
+    return inpainting_model(
+        prompt=class_prompt,
+        negative_prompt=negative_prompt,
+        image=image,
+        mask_image=bounding_box,
+        width=width,
+        height=height,
+        strength=0.5,
+        # num_inference_steps=4
+    ).images, bounding_box
