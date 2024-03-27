@@ -57,4 +57,4 @@ def gen_bounding_box_img(
 def inpaint_class_into_images(image, bounding_box_information, class_prompt, negative_prompt=default_negative_prompt, width=640, height=480):
     bounding_box = gen_bounding_box_img(**bounding_box_information)
     print(class_prompt)
-    return inpainting_model(prompt=class_prompt, negative_prompt=negative_prompt, image=image, mask_image=bounding_box, width=width, height=height, guidance_scale=16, strength=0.65).images, bounding_box
+    return inpainting_model(prompt=class_prompt, negative_prompt=negative_prompt, image=image, mask_image=bounding_box, width=width, height=height, guidance_scale=16, strength=0.7).images, bounding_box
