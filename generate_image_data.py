@@ -8,8 +8,12 @@ from PIL import Image
 background_model = StableDiffusionPipeline.from_pretrained(
 	"stabilityai/stable-diffusion-2",
 ).to("cuda")
-inpainting_model = StableDiffusionInpaintPipeline.from_pretrained(
-    "stabilityai/stable-diffusion-2-inpainting"
+
+# inpainting_model = StableDiffusionInpaintPipeline.from_pretrained(
+#     "stabilityai/stable-diffusion-2-inpainting"
+# ).to("cuda")
+inpainting_model = StableDiffusionInpaintPipeline(
+    **background_model.components
 ).to("cuda")
 
 default_negative_prompt = None # "low quality, poor quality, anime, cartoon, ugly, deformed, disfigured, poor details, blurry"
@@ -35,17 +39,17 @@ def gen_bounding_box_img(
         height = np.random.randint(height_min, height_max)
     else:
         if aspect_ratio < 1:
-            height = np.random.randint(0, img_height)
+            height = np.random.randint(img_height//4, img_height//2)
             width = height * aspect_ratio
         else:
-            width = np.random.randint(0, img_width)
+            width = np.random.randint(img_width//4, img_width//2)
             height = width/aspect_ratio
 
     position_x = np.random.randint(0, img_width-width)
     position_y = np.random.randint(0, img_height-height)
 
     img = np.zeros((img_height, img_width, 1))
-    print(position_y, int(position_y + height), position_x, position_x + width)
+    print(position_y, int(position_y + height), position_x, int(position_x + width))
     img[position_y:int(position_y + height), position_x:int(position_x + width), :] = 1
     return img
 
@@ -53,4 +57,4 @@ def gen_bounding_box_img(
 def inpaint_class_into_images(image, bounding_box_information, class_prompt, negative_prompt=default_negative_prompt, width=640, height=480):
     bounding_box = gen_bounding_box_img(**bounding_box_information)
     print(class_prompt)
-    return inpainting_model(prompt=class_prompt, negative_prompt=negative_prompt, image=image, mask_image=bounding_box, width=width, height=height, guidance_scale=20, strength=0.75).images, bounding_box
+    return inpainting_model(prompt=class_prompt, negative_prompt=negative_prompt, image=image, mask_image=bounding_box, width=width, height=height, guidance_scale=16, strength=0.65).images, bounding_box
