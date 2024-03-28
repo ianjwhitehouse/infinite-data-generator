@@ -2,10 +2,11 @@
 from diffusers import AutoPipelineForText2Image, AutoPipelineForInpainting
 import numpy as np
 from PIL import Image
+from scipy.ndimage.filters import gaussian_filter
 
 
 # Load diffusion models
-background_model = AutoPipelineForText2Image.from_pretrained(
+background_model = AutoPipelineForText2Image.from_pretrained( # Try sdxl pipeline
 	"stabilityai/sdxl-turbo",
 ).to("cuda")
 
@@ -14,24 +15,25 @@ background_model = AutoPipelineForText2Image.from_pretrained(
 # ).to("cuda")
 inpainting_model = AutoPipelineForInpainting.from_pipe(background_model).to("cuda")
 
-default_negative_prompt = "cartoon drawing, dark"
+default_negative_prompt = "render, anime, cartoon, illustration, drawing"# , dark"
 
 # Generate background img or img(s)
-def gen_background_img(prompt, negative_prompt=default_negative_prompt, num_imgs_per_prompt=8, width=640, height=480):
+def gen_background_img(prompt, negative_prompt=default_negative_prompt, num_imgs_per_prompt=8, width=768, height=768):
     return background_model(
         prompt=prompt,
         negative_prompt=negative_prompt,
         num_images_per_prompt=num_imgs_per_prompt,
         width=width,
         height=height,
-        # num_inference_steps=1
+        guidance_scale=0.0,
+        num_inference_steps=2
     ).images
 
 # Generate bounding boxes (aspect_ratio is in width/height)
 def gen_bounding_box_img(
     aspect_ratio_min=None, aspect_ratio_max=None,
     width_min=None, height_min=None, width_max=None, height_max=None,
-    img_width=640, img_height=480
+    img_width=768, img_height=768
 ):
     # Set the width and height if it the aspect ratio is defined
     if aspect_ratio_min and aspect_ratio_max:
@@ -56,19 +58,20 @@ def gen_bounding_box_img(
     img = np.zeros((img_height, img_width, 1))
     print(position_y, int(position_y + height), position_x, int(position_x + width))
     img[position_y:int(position_y + height), position_x:int(position_x + width), :] = 1
-    return img
+    return img, gaussian_filter(img, sigma=25)
 
 # Generate inpainted images (all of these should be single values)
-def inpaint_class_into_images(image, bounding_box_information, class_prompt, negative_prompt=default_negative_prompt, width=640, height=480):
-    bounding_box = gen_bounding_box_img(**bounding_box_information)
+def inpaint_class_into_images(image, bounding_box_information, class_prompt, negative_prompt=default_negative_prompt, width=768, height=768):
+    bounding_box, mask = gen_bounding_box_img(**bounding_box_information)
     print(class_prompt)
     return inpainting_model(
         prompt=class_prompt,
-        negative_prompt=negative_prompt,
+        # negative_prompt=negative_prompt,
         image=image,
-        mask_image=bounding_box,
+        mask_image=mask,
         width=width,
         height=height,
-        strength=0.5,
-        # num_inference_steps=4
+        strength=0.75,
+        num_inference_steps=4,
+        guidance_scale=0.0,
     ).images, bounding_box

@@ -36,7 +36,7 @@ for i, img in enumerate(background_imgs):
             cls_bbs.append(bb.tolist())
             
         if cls_instances < 1:
-            bbs.append(np.zeros((480, 640)))
+            bbs.append(np.zeros((768, 768)))
         else:
             bbs.append(np.any(np.array(cls_bbs), axis=0)[:, :, 0])
             print(np.any(np.array(cls_bbs), axis=0).shape)
